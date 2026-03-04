@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/gin-contrib/sessions"
@@ -10,7 +11,8 @@ import (
 )
 
 type turnstileCheckResponse struct {
-	Success bool `json:"success"`
+	Success    bool     `json:"success"`
+	ErrorCodes []string `json:"error-codes"`
 }
 
 func TurnstileCheck() gin.HandlerFunc {
@@ -63,6 +65,18 @@ func TurnstileCheck() gin.HandlerFunc {
 				verifyURL = "https://hcaptcha.com/siteverify"
 				secret = common.HCaptchaSecretKey
 			}
+			if secret == "" {
+				message := "Turnstile Secret Key 为空，请联系管理员配置"
+				if provider == "hcaptcha" {
+					message = "hCaptcha Secret Key 为空，请联系管理员配置"
+				}
+				c.JSON(http.StatusOK, gin.H{
+					"success": false,
+					"message": message,
+				})
+				c.Abort()
+				return
+			}
 
 			rawRes, err := http.PostForm(verifyURL, url.Values{
 				"secret":   {secret},
@@ -91,6 +105,11 @@ func TurnstileCheck() gin.HandlerFunc {
 				return
 			}
 			if !res.Success {
+				if len(res.ErrorCodes) > 0 {
+					common.SysLog("captcha verification failed, provider=" + provider + ", error_codes=" + strings.Join(res.ErrorCodes, ","))
+				} else {
+					common.SysLog("captcha verification failed, provider=" + provider)
+				}
 				message := "Turnstile 校验失败，请刷新重试！"
 				if provider == "hcaptcha" {
 					message = "hCaptcha 校验失败，请刷新重试！"
