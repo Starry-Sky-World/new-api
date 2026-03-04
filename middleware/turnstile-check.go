@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -197,6 +198,10 @@ func verifyAMFSByScore(c *gin.Context, eventID string) (bool, error) {
 	if strings.TrimSpace(common.AMFSApiBase) == "" || strings.TrimSpace(common.AMFSSiteID) == "" {
 		return false, fmt.Errorf("amfs config missing")
 	}
+	apiBase, validateErr := common.ValidateAMFSBaseURL(common.AMFSApiBase)
+	if validateErr != nil {
+		return false, validateErr
+	}
 
 	timeout := time.Duration(common.AMFSTimeoutMs) * time.Millisecond
 	if timeout <= 0 {
@@ -215,8 +220,7 @@ func verifyAMFSByScore(c *gin.Context, eventID string) (bool, error) {
 		return false, err
 	}
 
-	apiBase := strings.TrimRight(common.AMFSApiBase, "/")
-	req, err := http.NewRequest(http.MethodPost, apiBase+"/v1/score", strings.NewReader(string(reqBody)))
+	req, err := http.NewRequest(http.MethodPost, apiBase+"/v1/score", bytes.NewReader(reqBody))
 	if err != nil {
 		return false, err
 	}

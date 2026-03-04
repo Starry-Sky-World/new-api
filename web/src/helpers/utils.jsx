@@ -301,6 +301,47 @@ export const getCaptchaQueryString = (token, captchaProvider = 'turnstile') => {
 
 let amfsSdkLoadPromise = null;
 let amfsInitializedKey = '';
+const TRUSTED_AMFS_DOMAINS = ['amfs.amethyst.ltd'];
+
+const isTrustedDomain = (domain, trustedDomain) =>
+  domain === trustedDomain || domain.endsWith(`.${trustedDomain}`);
+
+const normalizeAndValidateAmfsApiBase = (apiBase) => {
+  const raw = (apiBase || '').trim();
+  if (!raw) {
+    throw new Error('AMFS API Base 不能为空');
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error('AMFS API Base 格式无效');
+  }
+
+  if (parsed.protocol !== 'https:') {
+    throw new Error('AMFS API Base 必须使用 https');
+  }
+  if (parsed.search || parsed.hash) {
+    throw new Error('AMFS API Base 不能包含 query 或 fragment');
+  }
+  if (parsed.pathname && parsed.pathname !== '/') {
+    throw new Error('AMFS API Base 不能包含 path');
+  }
+  if (parsed.port && parsed.port !== '443') {
+    throw new Error('AMFS API Base 仅允许 443 端口');
+  }
+
+  const domain = parsed.hostname.toLowerCase();
+  const trusted = TRUSTED_AMFS_DOMAINS.some((trustedDomain) =>
+    isTrustedDomain(domain, trustedDomain),
+  );
+  if (!trusted) {
+    throw new Error('AMFS API Base 域名不在白名单内');
+  }
+
+  return parsed.origin;
+};
 
 const loadAmfsSdk = (apiBase) => {
   if (window.AmeFingerprint) {
@@ -329,17 +370,18 @@ export const getAmfsCaptchaToken = async ({
   if (!apiBase || !siteId) {
     throw new Error('AMFS 配置不完整');
   }
-  await loadAmfsSdk(apiBase);
+  const normalizedApiBase = normalizeAndValidateAmfsApiBase(apiBase);
+  await loadAmfsSdk(normalizedApiBase);
   if (!window.AmeFingerprint) {
     throw new Error('AMFS SDK 不可用');
   }
 
-  const initKey = `${apiBase}::${siteId}`;
+  const initKey = `${normalizedApiBase}::${siteId}`;
   if (amfsInitializedKey !== initKey) {
     window.AmeFingerprint.init({
       siteId,
-      apiBase,
-      wasmBase: `${removeTrailingSlash(apiBase)}/cdn/wasm`,
+      apiBase: normalizedApiBase,
+      wasmBase: `${removeTrailingSlash(normalizedApiBase)}/cdn/wasm`,
       debug: false,
     });
     amfsInitializedKey = initKey;

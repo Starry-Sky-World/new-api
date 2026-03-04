@@ -134,6 +134,13 @@ func UpdateOption(c *gin.Context) {
 				return
 			}
 			if common.CaptchaProvider == "amfs" {
+				if _, validateErr := common.ValidateAMFSBaseURL(common.AMFSApiBase); validateErr != nil {
+					c.JSON(http.StatusOK, gin.H{
+						"success": false,
+						"message": "AMFS API Base 无效：" + validateErr.Error(),
+					})
+					return
+				}
 				if common.AMFSApiBase == "" || common.AMFSSiteID == "" {
 					c.JSON(http.StatusOK, gin.H{
 						"success": false,
@@ -165,7 +172,25 @@ func UpdateOption(c *gin.Context) {
 			})
 			return
 		}
+		if option.Value == "amfs" {
+			if _, validateErr := common.ValidateAMFSBaseURL(common.AMFSApiBase); validateErr != nil {
+				c.JSON(http.StatusOK, gin.H{
+					"success": false,
+					"message": "AMFS API Base 无效：" + validateErr.Error(),
+				})
+				return
+			}
+		}
 	case "AMFSApiBase":
+		normalizedBase, validateErr := common.ValidateAMFSBaseURL(option.Value.(string))
+		if validateErr != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "AMFS API Base 无效：" + validateErr.Error(),
+			})
+			return
+		}
+		option.Value = normalizedBase
 		if common.TurnstileCheckEnabled && common.CaptchaProvider == "amfs" && strings.TrimSpace(option.Value.(string)) == "" {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
