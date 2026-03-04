@@ -387,10 +387,46 @@ export const getAmfsCaptchaToken = async ({
     amfsInitializedKey = initKey;
   }
 
-  const risk = await window.AmeFingerprint.getRisk({
-    scene,
-    userId,
-  });
+  let capturedEventIdFromScoreRequest = '';
+  const originalFetch = window.fetch;
+  const scoreEndpoint = `${removeTrailingSlash(normalizedApiBase)}/v1/score`;
+  window.fetch = async (input, init) => {
+    try {
+      let requestUrl = '';
+      let requestBodyText = '';
+      if (typeof input === 'string') {
+        requestUrl = input;
+        requestBodyText = init?.body || '';
+      } else if (input instanceof Request) {
+        requestUrl = input.url || '';
+        const cloned = input.clone();
+        requestBodyText = await cloned.text();
+      }
+      if (requestUrl.startsWith(scoreEndpoint) && requestBodyText) {
+        const parsedBody = JSON.parse(requestBodyText);
+        const maybeEventId = parsedBody?.eventId || parsedBody?.event_id;
+        if (
+          typeof maybeEventId === 'string' &&
+          maybeEventId.trim().startsWith('evt_')
+        ) {
+          capturedEventIdFromScoreRequest = maybeEventId.trim();
+        }
+      }
+    } catch {
+      // Ignore capture errors and fallback to normal extraction.
+    }
+    return originalFetch(input, init);
+  };
+
+  let risk;
+  try {
+    risk = await window.AmeFingerprint.getRisk({
+      scene,
+      userId,
+    });
+  } finally {
+    window.fetch = originalFetch;
+  }
   const extractEventIdRecursively = (value, depth = 0) => {
     if (depth > 6 || value === null || typeof value === 'undefined') {
       return '';
@@ -430,7 +466,11 @@ export const getAmfsCaptchaToken = async ({
     return '';
   };
 
-  return extractEventIdRecursively(risk);
+  const extractedEventId = extractEventIdRecursively(risk);
+  if (extractedEventId) {
+    return extractedEventId;
+  }
+  return capturedEventIdFromScoreRequest;
 };
 
 export function verifyJSONPromise(value) {
