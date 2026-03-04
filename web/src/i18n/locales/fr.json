@@ -2738,6 +2738,14 @@
     "写": "Écriture",
     "根据 Anthropic 协定，/v1/messages 的输入 tokens 仅统计非缓存输入，不包含缓存读取与缓存写入 tokens。": "Selon la convention Anthropic, les tokens d'entrée de /v1/messages ne comptent que les entrées non mises en cache et excluent les tokens de lecture/écriture du cache.",
     "设计版本": "b80c3466cb6feafeb3990c7820e10e50",
-    "未匹配到模型，按回车键可将「{{name}}」作为自定义模型名添加": "Aucun modèle correspondant. Appuyez sur Entrée pour ajouter «{{name}}» comme nom de modèle personnalisé."
+    "未匹配到模型，按回车键可将「{{name}}」作为自定义模型名添加": "Aucun modèle correspondant. Appuyez sur Entrée pour ajouter «{{name}}» comme nom de modèle personnalisé.",
+    "允许验证码用户校验": "Autoriser la vérification utilisateur par captcha",
+    "配置验证码": "Configurer le captcha",
+    "验证码提供商": "Fournisseur de captcha",
+    "hCaptcha Site Key": "Clé du site hCaptcha",
+    "hCaptcha Secret Key": "Clé secrète hCaptcha",
+    "保存验证码设置": "Enregistrer les paramètres du captcha",
+    "请稍后几秒重试，验证码正在检查用户环境！": "Veuillez réessayer dans quelques secondes, le captcha vérifie l'environnement utilisateur !",
+    "验证码已启用但 Site Key 为空。": "Le captcha est activé mais la clé de site est vide."
   }
 }

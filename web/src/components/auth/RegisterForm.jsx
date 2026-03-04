@@ -32,7 +32,7 @@ import {
   onDiscordOAuthClicked,
   onCustomOAuthClicked,
 } from '../../helpers';
-import Turnstile from 'react-turnstile';
+import CaptchaWidget from '../common/captcha/CaptchaWidget';
 import {
   Button,
   Card,
@@ -87,6 +87,7 @@ const RegisterForm = () => {
   const [turnstileEnabled, setTurnstileEnabled] = useState(false);
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [captchaProvider, setCaptchaProvider] = useState('turnstile');
   const [showWeChatLoginModal, setShowWeChatLoginModal] = useState(false);
   const [showEmailRegister, setShowEmailRegister] = useState(false);
   const [wechatLoading, setWechatLoading] = useState(false);
@@ -145,15 +146,30 @@ const RegisterForm = () => {
 
   useEffect(() => {
     setShowEmailVerification(!!status?.email_verification);
-    if (status?.turnstile_check) {
+    const captchaEnabled = status?.captcha_check ?? status?.turnstile_check;
+    if (captchaEnabled) {
       setTurnstileEnabled(true);
-      setTurnstileSiteKey(status.turnstile_site_key);
+      setTurnstileSiteKey(status.captcha_site_key || status.turnstile_site_key);
+      setCaptchaProvider(status.captcha_provider || 'turnstile');
+    } else {
+      setTurnstileEnabled(false);
+      setTurnstileSiteKey('');
+      setCaptchaProvider('turnstile');
     }
 
     // 从 status 获取用户协议和隐私政策的启用状态
     setHasUserAgreement(status?.user_agreement_enabled || false);
     setHasPrivacyPolicy(status?.privacy_policy_enabled || false);
   }, [status]);
+
+  const getCaptchaQuery = (token) => {
+    if (!token) return '';
+    const encodedToken = encodeURIComponent(token);
+    if (captchaProvider === 'hcaptcha') {
+      return `hcaptcha=${encodedToken}&captcha=${encodedToken}`;
+    }
+    return `turnstile=${encodedToken}&captcha=${encodedToken}`;
+  };
 
   useEffect(() => {
     let countdownInterval = null;
@@ -184,7 +200,7 @@ const RegisterForm = () => {
 
   const onSubmitWeChatVerificationCode = async () => {
     if (turnstileEnabled && turnstileToken === '') {
-      showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
+      showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
     setWechatCodeSubmitLoading(true);
@@ -226,7 +242,7 @@ const RegisterForm = () => {
     }
     if (username && password) {
       if (turnstileEnabled && turnstileToken === '') {
-        showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
+        showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
         return;
       }
       setRegisterLoading(true);
@@ -236,7 +252,7 @@ const RegisterForm = () => {
         }
         inputs.aff_code = affCode;
         const res = await API.post(
-          `/api/user/register?turnstile=${turnstileToken}`,
+          `/api/user/register?${getCaptchaQuery(turnstileToken)}`,
           inputs,
         );
         const { success, message } = res.data;
@@ -257,13 +273,13 @@ const RegisterForm = () => {
   const sendVerificationCode = async () => {
     if (inputs.email === '') return;
     if (turnstileEnabled && turnstileToken === '') {
-      showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
+      showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
     setVerificationCodeLoading(true);
     try {
       const res = await API.get(
-        `/api/verification?email=${encodeURIComponent(inputs.email)}&turnstile=${turnstileToken}`,
+        `/api/verification?email=${encodeURIComponent(inputs.email)}&${getCaptchaQuery(turnstileToken)}`,
       );
       const { success, message } = res.data;
       if (success) {
@@ -789,8 +805,9 @@ const RegisterForm = () => {
 
         {turnstileEnabled && (
           <div className='flex justify-center mt-6'>
-            <Turnstile
-              sitekey={turnstileSiteKey}
+            <CaptchaWidget
+              provider={captchaProvider}
+              siteKey={turnstileSiteKey}
               onVerify={(token) => {
                 setTurnstileToken(token);
               }}

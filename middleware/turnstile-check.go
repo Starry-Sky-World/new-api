@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/url"
 
@@ -18,22 +17,55 @@ func TurnstileCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if common.TurnstileCheckEnabled {
 			session := sessions.Default(c)
-			turnstileChecked := session.Get("turnstile")
-			if turnstileChecked != nil {
+			captchaChecked := session.Get("captcha")
+			legacyTurnstileChecked := session.Get("turnstile")
+			if captchaChecked != nil || legacyTurnstileChecked != nil {
 				c.Next()
 				return
 			}
-			response := c.Query("turnstile")
+
+			provider := common.CaptchaProvider
+			if provider != "hcaptcha" {
+				provider = "turnstile"
+			}
+
+			response := c.Query("captcha")
 			if response == "" {
+				if provider == "hcaptcha" {
+					response = c.Query("hcaptcha")
+				} else {
+					response = c.Query("turnstile")
+				}
+			}
+			if response == "" {
+				// Backward and forward compatibility.
+				response = c.Query("turnstile")
+			}
+			if response == "" {
+				response = c.Query("hcaptcha")
+			}
+			if response == "" {
+				message := "Turnstile token 为空"
+				if provider == "hcaptcha" {
+					message = "hCaptcha token 为空"
+				}
 				c.JSON(http.StatusOK, gin.H{
 					"success": false,
-					"message": "Turnstile token 为空",
+					"message": message,
 				})
 				c.Abort()
 				return
 			}
-			rawRes, err := http.PostForm("https://challenges.cloudflare.com/turnstile/v0/siteverify", url.Values{
-				"secret":   {common.TurnstileSecretKey},
+
+			verifyURL := "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+			secret := common.TurnstileSecretKey
+			if provider == "hcaptcha" {
+				verifyURL = "https://hcaptcha.com/siteverify"
+				secret = common.HCaptchaSecretKey
+			}
+
+			rawRes, err := http.PostForm(verifyURL, url.Values{
+				"secret":   {secret},
 				"response": {response},
 				"remoteip": {c.ClientIP()},
 			})
@@ -48,7 +80,7 @@ func TurnstileCheck() gin.HandlerFunc {
 			}
 			defer rawRes.Body.Close()
 			var res turnstileCheckResponse
-			err = json.NewDecoder(rawRes.Body).Decode(&res)
+			err = common.DecodeJson(rawRes.Body, &res)
 			if err != nil {
 				common.SysLog(err.Error())
 				c.JSON(http.StatusOK, gin.H{
@@ -59,14 +91,18 @@ func TurnstileCheck() gin.HandlerFunc {
 				return
 			}
 			if !res.Success {
+				message := "Turnstile 校验失败，请刷新重试！"
+				if provider == "hcaptcha" {
+					message = "hCaptcha 校验失败，请刷新重试！"
+				}
 				c.JSON(http.StatusOK, gin.H{
 					"success": false,
-					"message": "Turnstile 校验失败，请刷新重试！",
+					"message": message,
 				})
 				c.Abort()
 				return
 			}
-			session.Set("turnstile", true)
+			session.Set("captcha", true)
 			err = session.Save()
 			if err != nil {
 				c.JSON(http.StatusOK, gin.H{

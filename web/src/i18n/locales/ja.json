@@ -2721,6 +2721,14 @@
     "写": "書込",
     "根据 Anthropic 协定，/v1/messages 的输入 tokens 仅统计非缓存输入，不包含缓存读取与缓存写入 tokens。": "Anthropic の仕様により、/v1/messages の入力 tokens は非キャッシュ入力のみを集計し、キャッシュ読み取り/書き込み tokens は含みません。",
     "设计版本": "b80c3466cb6feafeb3990c7820e10e50",
-    "未匹配到模型，按回车键可将「{{name}}」作为自定义模型名添加": "一致するモデルが見つかりません。Enterキーで「{{name}}」をカスタムモデル名として追加できます。"
+    "未匹配到模型，按回车键可将「{{name}}」作为自定义模型名添加": "一致するモデルが見つかりません。Enterキーで「{{name}}」をカスタムモデル名として追加できます。",
+    "允许验证码用户校验": "captcha によるユーザー検証を許可する",
+    "配置验证码": "captcha 設定",
+    "验证码提供商": "captcha プロバイダー",
+    "hCaptcha Site Key": "hCaptcha Site Key",
+    "hCaptcha Secret Key": "hCaptcha Secret Key",
+    "保存验证码设置": "captcha 設定を保存",
+    "请稍后几秒重试，验证码正在检查用户环境！": "数秒後に再試行してください。captcha がユーザー環境を確認中です！",
+    "验证码已启用但 Site Key 为空。": "captcha は有効ですが Site Key が空です。"
   }
 }

@@ -74,6 +74,7 @@ export default defineConfig({
           'react-components': [
             'react-dropzone',
             'react-fireworks',
+            '@hcaptcha/react-hcaptcha',
             'react-telegram-login',
             'react-toastify',
             'react-turnstile',

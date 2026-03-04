@@ -46,6 +46,10 @@ func GetStatus(c *gin.Context) {
 
 	passkeySetting := system_setting.GetPasskeySettings()
 	legalSetting := system_setting.GetLegalSettings()
+	captchaSiteKey := common.TurnstileSiteKey
+	if common.CaptchaProvider == "hcaptcha" {
+		captchaSiteKey = common.HCaptchaSiteKey
+	}
 
 	data := gin.H{
 		"version":                     common.Version,
@@ -66,6 +70,9 @@ func GetStatus(c *gin.Context) {
 		"wechat_qrcode":               common.WeChatAccountQRCodeImageURL,
 		"wechat_login":                common.WeChatAuthEnabled,
 		"server_address":              system_setting.ServerAddress,
+		"captcha_provider":            common.CaptchaProvider,
+		"captcha_check":               common.TurnstileCheckEnabled,
+		"captcha_site_key":            captchaSiteKey,
 		"turnstile_check":             common.TurnstileCheckEnabled,
 		"turnstile_site_key":          common.TurnstileSiteKey,
 		"top_up_link":                 common.TopUpLink,

@@ -3297,6 +3297,14 @@
     "写": "Ghi",
     "根据 Anthropic 协定，/v1/messages 的输入 tokens 仅统计非缓存输入，不包含缓存读取与缓存写入 tokens。": "Theo quy ước của Anthropic, input tokens của /v1/messages chỉ tính phần đầu vào không dùng cache và không bao gồm tokens đọc/ghi cache.",
     "设计版本": "b80c3466cb6feafeb3990c7820e10e50",
-    "未匹配到模型，按回车键可将「{{name}}」作为自定义模型名添加": "Không tìm thấy mô hình khớp. Nhấn Enter để thêm \"{{name}}\" làm tên mô hình tùy chỉnh."
+    "未匹配到模型，按回车键可将「{{name}}」作为自定义模型名添加": "Không tìm thấy mô hình khớp. Nhấn Enter để thêm \"{{name}}\" làm tên mô hình tùy chỉnh.",
+    "允许验证码用户校验": "Cho phép xác minh người dùng bằng captcha",
+    "配置验证码": "Cấu hình captcha",
+    "验证码提供商": "Nhà cung cấp captcha",
+    "hCaptcha Site Key": "hCaptcha Site Key",
+    "hCaptcha Secret Key": "hCaptcha Secret Key",
+    "保存验证码设置": "Lưu cài đặt captcha",
+    "请稍后几秒重试，验证码正在检查用户环境！": "Vui lòng thử lại sau vài giây, captcha đang kiểm tra môi trường người dùng!",
+    "验证码已启用但 Site Key 为空。": "Captcha đã bật nhưng Site Key đang để trống."
   }
 }

@@ -2836,6 +2836,14 @@
     "写": "Write",
     "根据 Anthropic 协定，/v1/messages 的输入 tokens 仅统计非缓存输入，不包含缓存读取与缓存写入 tokens。": "Per Anthropic conventions, /v1/messages input tokens count only non-cached input and exclude cache read/write tokens.",
     "设计版本": "b80c3466cb6feafeb3990c7820e10e50",
-    "未匹配到模型，按回车键可将「{{name}}」作为自定义模型名添加": "No matching models. Press Enter to add \"{{name}}\" as a custom model name."
+    "未匹配到模型，按回车键可将「{{name}}」作为自定义模型名添加": "No matching models. Press Enter to add \"{{name}}\" as a custom model name.",
+    "允许验证码用户校验": "Allow captcha user verification",
+    "配置验证码": "Configure captcha",
+    "验证码提供商": "Captcha provider",
+    "hCaptcha Site Key": "hCaptcha Site Key",
+    "hCaptcha Secret Key": "hCaptcha Secret Key",
+    "保存验证码设置": "Save captcha settings",
+    "请稍后几秒重试，验证码正在检查用户环境！": "Please retry in a few seconds, captcha is checking the user environment!",
+    "验证码已启用但 Site Key 为空。": "Captcha is enabled but Site Key is empty."
   }
 }

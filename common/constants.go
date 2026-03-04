@@ -96,6 +96,9 @@ var WeChatAccountQRCodeImageURL = ""
 
 var TurnstileSiteKey = ""
 var TurnstileSecretKey = ""
+var HCaptchaSiteKey = ""
+var HCaptchaSecretKey = ""
+var CaptchaProvider = "turnstile"
 
 var TelegramBotToken = ""
 var TelegramBotName = ""

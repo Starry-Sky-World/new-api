@@ -66,6 +66,7 @@ const PersonalSetting = () => {
   const [showEmailBindModal, setShowEmailBindModal] = useState(false);
   const [showAccountDeleteModal, setShowAccountDeleteModal] = useState(false);
   const [turnstileEnabled, setTurnstileEnabled] = useState(false);
+  const [captchaProvider, setCaptchaProvider] = useState('turnstile');
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
   const [loading, setLoading] = useState(false);
@@ -95,11 +96,16 @@ const PersonalSetting = () => {
     if (saved) {
       const parsed = JSON.parse(saved);
       setStatus(parsed);
-      if (parsed.turnstile_check) {
+      const captchaEnabled = parsed.captcha_check ?? parsed.turnstile_check;
+      if (captchaEnabled) {
         setTurnstileEnabled(true);
-        setTurnstileSiteKey(parsed.turnstile_site_key);
+        setCaptchaProvider(parsed.captcha_provider || 'turnstile');
+        setTurnstileSiteKey(
+          parsed.captcha_site_key || parsed.turnstile_site_key || '',
+        );
       } else {
         setTurnstileEnabled(false);
+        setCaptchaProvider('turnstile');
         setTurnstileSiteKey('');
       }
     }
@@ -111,11 +117,16 @@ const PersonalSetting = () => {
         if (success && data) {
           setStatus(data);
           setStatusData(data);
-          if (data.turnstile_check) {
+          const captchaEnabled = data.captcha_check ?? data.turnstile_check;
+          if (captchaEnabled) {
             setTurnstileEnabled(true);
-            setTurnstileSiteKey(data.turnstile_site_key);
+            setCaptchaProvider(data.captcha_provider || 'turnstile');
+            setTurnstileSiteKey(
+              data.captcha_site_key || data.turnstile_site_key || '',
+            );
           } else {
             setTurnstileEnabled(false);
+            setCaptchaProvider('turnstile');
             setTurnstileSiteKey('');
           }
         }
@@ -353,12 +364,21 @@ const PersonalSetting = () => {
     }
     setDisableButton(true);
     if (turnstileEnabled && turnstileToken === '') {
-      showInfo(t('请稍后几秒重试，Turnstile 正在检查用户环境！'));
+      showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
     setLoading(true);
+    const encodedToken = encodeURIComponent(turnstileToken);
+    let captchaQuery = '';
+    if (turnstileToken) {
+      if (captchaProvider === 'hcaptcha') {
+        captchaQuery = `&hcaptcha=${encodedToken}&captcha=${encodedToken}`;
+      } else {
+        captchaQuery = `&turnstile=${encodedToken}&captcha=${encodedToken}`;
+      }
+    }
     const res = await API.get(
-      `/api/verification?email=${inputs.email}&turnstile=${turnstileToken}`,
+      `/api/verification?email=${inputs.email}${captchaQuery}`,
     );
     const { success, message } = res.data;
     if (success) {
@@ -456,6 +476,7 @@ const PersonalSetting = () => {
                 t={t}
                 status={status}
                 turnstileEnabled={turnstileEnabled}
+                captchaProvider={captchaProvider}
                 turnstileSiteKey={turnstileSiteKey}
               />
             </div>
@@ -512,6 +533,7 @@ const PersonalSetting = () => {
         loading={loading}
         countdown={countdown}
         turnstileEnabled={turnstileEnabled}
+        captchaProvider={captchaProvider}
         turnstileSiteKey={turnstileSiteKey}
         setTurnstileToken={setTurnstileToken}
       />
@@ -535,6 +557,7 @@ const PersonalSetting = () => {
         deleteAccount={deleteAccount}
         userState={userState}
         turnstileEnabled={turnstileEnabled}
+        captchaProvider={captchaProvider}
         turnstileSiteKey={turnstileSiteKey}
         setTurnstileToken={setTurnstileToken}
       />
@@ -547,6 +570,7 @@ const PersonalSetting = () => {
         handleInputChange={handleInputChange}
         changePassword={changePassword}
         turnstileEnabled={turnstileEnabled}
+        captchaProvider={captchaProvider}
         turnstileSiteKey={turnstileSiteKey}
         setTurnstileToken={setTurnstileToken}
       />

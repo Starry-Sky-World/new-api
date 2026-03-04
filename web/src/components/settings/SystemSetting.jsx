@@ -78,8 +78,11 @@ const SystemSetting = () => {
     WeChatServerToken: '',
     WeChatAccountQRCodeImageURL: '',
     TurnstileCheckEnabled: '',
+    CaptchaProvider: 'turnstile',
     TurnstileSiteKey: '',
     TurnstileSecretKey: '',
+    HCaptchaSiteKey: '',
+    HCaptchaSecretKey: '',
     RegisterEnabled: '',
     'passkey.enabled': '',
     'passkey.rp_display_name': '',
@@ -213,6 +216,9 @@ const SystemSetting = () => {
         }
         newInputs[item.key] = item.value;
       });
+      if (!newInputs.CaptchaProvider) {
+        newInputs.CaptchaProvider = 'turnstile';
+      }
       setInputs(newInputs);
       setOriginInputs(newInputs);
       // 同步模式布尔到本地状态
@@ -589,6 +595,9 @@ const SystemSetting = () => {
   const submitTurnstile = async () => {
     const options = [];
 
+    if (originInputs['CaptchaProvider'] !== inputs.CaptchaProvider) {
+      options.push({ key: 'CaptchaProvider', value: inputs.CaptchaProvider });
+    }
     if (originInputs['TurnstileSiteKey'] !== inputs.TurnstileSiteKey) {
       options.push({ key: 'TurnstileSiteKey', value: inputs.TurnstileSiteKey });
     }
@@ -599,6 +608,18 @@ const SystemSetting = () => {
       options.push({
         key: 'TurnstileSecretKey',
         value: inputs.TurnstileSecretKey,
+      });
+    }
+    if (originInputs['HCaptchaSiteKey'] !== inputs.HCaptchaSiteKey) {
+      options.push({ key: 'HCaptchaSiteKey', value: inputs.HCaptchaSiteKey });
+    }
+    if (
+      originInputs['HCaptchaSecretKey'] !== inputs.HCaptchaSecretKey &&
+      inputs.HCaptchaSecretKey !== ''
+    ) {
+      options.push({
+        key: 'HCaptchaSecretKey',
+        value: inputs.HCaptchaSecretKey,
       });
     }
 
@@ -1031,7 +1052,7 @@ const SystemSetting = () => {
                           handleCheckboxChange('TurnstileCheckEnabled', e)
                         }
                       >
-                        {t('允许 Turnstile 用户校验')}
+                        {t('允许验证码用户校验')}
                       </Form.Checkbox>
                     </Col>
                     <Col xs={24} sm={24} md={12} lg={12} xl={12}>
@@ -1598,8 +1619,28 @@ const SystemSetting = () => {
               </Card>
 
               <Card>
-                <Form.Section text={t('配置 Turnstile')}>
+                <Form.Section text={t('配置验证码')}>
                   <Text>{t('用以支持用户校验')}</Text>
+                  <Row
+                    gutter={{ xs: 8, sm: 16, md: 24, lg: 24, xl: 24, xxl: 24 }}
+                  >
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Select
+                        field='CaptchaProvider'
+                        label={t('验证码提供商')}
+                        optionList={[
+                          { label: 'Turnstile', value: 'turnstile' },
+                          { label: 'hCaptcha', value: 'hcaptcha' },
+                        ]}
+                        onChange={(value) => {
+                          setInputs((prev) => ({
+                            ...prev,
+                            CaptchaProvider: value || 'turnstile',
+                          }));
+                        }}
+                      />
+                    </Col>
+                  </Row>
                   <Row
                     gutter={{ xs: 8, sm: 16, md: 24, lg: 24, xl: 24, xxl: 24 }}
                   >
@@ -1617,9 +1658,23 @@ const SystemSetting = () => {
                         placeholder={t('敏感信息不会发送到前端显示')}
                       />
                     </Col>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Input
+                        field='HCaptchaSiteKey'
+                        label={t('hCaptcha Site Key')}
+                      />
+                    </Col>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                      <Form.Input
+                        field='HCaptchaSecretKey'
+                        label={t('hCaptcha Secret Key')}
+                        type='password'
+                        placeholder={t('敏感信息不会发送到前端显示')}
+                      />
+                    </Col>
                   </Row>
                   <Button onClick={submitTurnstile}>
-                    {t('保存 Turnstile 设置')}
+                    {t('保存验证码设置')}
                   </Button>
                 </Form.Section>
               </Card>

@@ -117,12 +117,35 @@ func UpdateOption(c *gin.Context) {
 			return
 		}
 	case "TurnstileCheckEnabled":
-		if option.Value == "true" && common.TurnstileSiteKey == "" {
+		if option.Value == "true" {
+			if common.CaptchaProvider == "hcaptcha" && common.HCaptchaSiteKey == "" {
+				c.JSON(http.StatusOK, gin.H{
+					"success": false,
+					"message": "无法启用 hCaptcha 校验，请先填入 hCaptcha 校验相关配置信息！",
+				})
+				return
+			}
+			if common.CaptchaProvider != "hcaptcha" && common.TurnstileSiteKey == "" {
+				c.JSON(http.StatusOK, gin.H{
+					"success": false,
+					"message": "无法启用 Turnstile 校验，请先填入 Turnstile 校验相关配置信息！",
+				})
+				return
+			}
+		}
+	case "CaptchaProvider":
+		if option.Value == "hcaptcha" && common.TurnstileCheckEnabled && common.HCaptchaSiteKey == "" {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
-				"message": "无法启用 Turnstile 校验，请先填入 Turnstile 校验相关配置信息！",
+				"message": "无法切换到 hCaptcha，请先填入 hCaptcha 校验相关配置信息！",
 			})
-
+			return
+		}
+		if option.Value == "turnstile" && common.TurnstileCheckEnabled && common.TurnstileSiteKey == "" {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "无法切换到 Turnstile，请先填入 Turnstile 校验相关配置信息！",
+			})
 			return
 		}
 	case "TelegramOAuthEnabled":

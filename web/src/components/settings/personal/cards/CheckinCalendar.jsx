@@ -36,10 +36,16 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import Turnstile from 'react-turnstile';
+import CaptchaWidget from '../../../common/captcha/CaptchaWidget';
 import { API, showError, showSuccess, renderQuota } from '../../../../helpers';
 
-const CheckinCalendar = ({ t, status, turnstileEnabled, turnstileSiteKey }) => {
+const CheckinCalendar = ({
+  t,
+  status,
+  turnstileEnabled,
+  captchaProvider,
+  turnstileSiteKey,
+}) => {
   const [loading, setLoading] = useState(false);
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [turnstileModalVisible, setTurnstileModalVisible] = useState(false);
@@ -114,16 +120,22 @@ const CheckinCalendar = ({ t, status, turnstileEnabled, turnstileSiteKey }) => {
   };
 
   const postCheckin = async (token) => {
-    const url = token
-      ? `/api/user/checkin?turnstile=${encodeURIComponent(token)}`
-      : '/api/user/checkin';
+    let url = '/api/user/checkin';
+    if (token) {
+      const encodedToken = encodeURIComponent(token);
+      if (captchaProvider === 'hcaptcha') {
+        url = `/api/user/checkin?hcaptcha=${encodedToken}&captcha=${encodedToken}`;
+      } else {
+        url = `/api/user/checkin?turnstile=${encodedToken}&captcha=${encodedToken}`;
+      }
+    }
     return API.post(url);
   };
 
   const shouldTriggerTurnstile = (message) => {
     if (!turnstileEnabled) return false;
     if (typeof message !== 'string') return true;
-    return message.includes('Turnstile');
+    return message.includes('Turnstile') || message.includes('hCaptcha');
   };
 
   const doCheckin = async (token) => {
@@ -141,7 +153,7 @@ const CheckinCalendar = ({ t, status, turnstileEnabled, turnstileSiteKey }) => {
       } else {
         if (!token && shouldTriggerTurnstile(message)) {
           if (!turnstileSiteKey) {
-            showError('Turnstile is enabled but site key is empty.');
+            showError(t('验证码已启用但 Site Key 为空。'));
             return;
           }
           setTurnstileModalVisible(true);
@@ -225,9 +237,10 @@ const CheckinCalendar = ({ t, status, turnstileEnabled, turnstileSiteKey }) => {
         }}
       >
         <div className='flex justify-center py-2'>
-          <Turnstile
-            key={turnstileWidgetKey}
-            sitekey={turnstileSiteKey}
+          <CaptchaWidget
+            provider={captchaProvider}
+            siteKey={turnstileSiteKey}
+            widgetKey={turnstileWidgetKey}
             onVerify={(token) => {
               doCheckin(token);
             }}
